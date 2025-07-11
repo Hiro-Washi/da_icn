@@ -12,7 +12,12 @@
 ファイル構成
 cef_fib_manager/
 ├── __init__.py
+        : FIBエントリの追加、削除、更新といったCRUD操作処理
+        : cefroute コマンドの実行や cefnetd.fib ファイルへの書き込みを cef_wrapper (後述) を介して実行
+        : FIBの衝突解決ロジック（例: 複数のノードが同じURIに異なるFIBエントリを提案した場合の解決策）
 ├── fib_manager.py
+        - 重要論点: FIB共有のコンセンサス/同期メカニズム
+        - 
 ├── config_parser.py
 ├── cef_command_executor.py
 ├── main.py

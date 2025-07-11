@@ -1,0 +1,74 @@
+# クライアントライブラリ
+インストール
+Zenohアプリケーションを開発するには、Zenohクライアントライブラリをインストールする必要があります。プログラミング言語に応じて、以下のAPIのいずれかを選択し、インストールと使用方法の説明を参照してください。
+Rust API
+Python API
+C API
+Pico API : 低電力デバイスを対象とした、C での Zenoh の移植版。
+
+# Zenoh ルーターインストール
+Zenohルーター（別名zenohd）とそのプラグインは現在、様々なプラットフォーム向けにビルド済みのバイナリとして提供されています。すべてのリリースパッケージは以下からダウンロードできます。
+
+https://download.eclipse.org/zenoh/zenoh/latest/
+各サブディレクトリにはRustターゲットの名前が付けられています。各ターゲットに対応するプラットフォームについては、https://doc.rust-lang.org/stable/rustc/platform-support.htmlをご覧ください。
+
+## UbuntuまたはDebian
+Eclipse Zenoh プライベート リポジトリをソース リストに追加します。
+$ echo "deb [trusted=yes] https://download.eclipse.org/zenoh/debian-repo/ /" | sudo tee -a /etc/apt/sources.list > /dev/null
+$ sudo apt update
+
+Zenohをインストールします。
+$ sudo apt install zenoh
+
+次に、次のコマンドで Zenoh ルーターを起動できます。
+$ zenohd
+
+## インストールのテスト
+インストールをテストするには、次のコマンドを実行して Zenoh のマニュアル ページを表示してみます。
+
+$ zenohd --help
+コンソールに次の出力が表示されます。
+
+zenohdを介して接続するにはclientモードで実行する必要があるみたい。
+デフォルトはpeerモード
+clientモードでzenohdに接続するには、zenohdの起動オプションで--listenを指定しないといけない。
+./zenohd.exe -l tcp/{host ip}:7447
+python z_sub.py --mode client -l tcp/{host ip}:7447
+
+## With ROS2
+ROS 2のインストールは済んでいるものとします。
+zenoh-bridge-ddsを追加でインストールします。
+sudo apt install ros-humble-zenoh-bridge-dds
+
+別PC側にて
+ros2 run zenoh_bridge_dds zenoh_bridge_dds -l tcp/0.0.0.0:7447
+Publish
+ros2 run demo_nodes_cpp talker
+WSL側にて
+ros2 run zenoh_bridge_dds zenoh_bridge_dds -e tcp/{別PCのIPアドレス}:7447
+Subscribe
+ros2 run demo_nodes_cpp listener
+
+Error
+- WSLと別PC間で時刻ズレがあるとエラーになるので時刻同期する
+  エラー内容
+  別PC側のコンソールに下記のようなエラーが表示される
+  [2023-12-27T08:22:12Z ERROR zenoh::net::routing::pubsub] Error treating timestamp for received Data (incoming timestamp from F9039AF2CCA14BE7A607C400179A8C42 exceeding delta 100ms is rejected: 2023-12-27T08:22:13.760682929Z vs. now: 2023-12-27T08:22:12.731079582Z): drop it!
+
+  WSLに一部のメッセージが届いていない様子。
+1.まずWindowsの時刻同期を実行.
+2. WSL2とWindows間で時刻同期を実行。
+  sudo hwclock --hctosys
+3. 別PCの時刻同期も実行
+
+
+Rust API
+Python API
+C API
+Pico API : 低電力デバイスを対象とした、C での Zenoh の移植版。
+
+Python
+# Pub/Sub
+
+# Store and Query in Zenoh
+次のステップとして、パブリッシャーが生成した値をZenohに保存する方法を見てみましょう。そのために、Zenoh router (zenohd)を使います。デフォルトでは、Zenohルーターは何も保存せずに起動します。温度を保存するためには、設定する必要があります。この内容でZenoh用の設定ファイルzenoh-myhome.json5を作成します：
