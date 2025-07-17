@@ -1,6 +1,7 @@
 import zenoh
 
 if __name__ == "__main__":
+    config = zenoh.Config()  # デフォルト設定を使う場合
     session = zenoh.open()
     replies = session.get('myhome/camera1/one/image')
     for reply in replies:
