@@ -8,7 +8,7 @@ def read_temp():
 
 if __name__ == "__main__":
     with zenoh.open(zenoh.Config()) as session:
-        key = 'myhome/kitchen/temp'
+        key = 'myhome/kitchen/camera1/image'
         pub = session.declare_publisher(key)
         while True:
             t = read_temp()
