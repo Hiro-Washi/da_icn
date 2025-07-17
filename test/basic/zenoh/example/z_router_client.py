@@ -17,14 +17,18 @@ if __name__ == "__main__":
     for reply in replies:
         try:
             print("Received ('{}': '{}')"
-                format(reply.ok.key_expr, reply.ok.payload.decode("utf-8")))
+                .format(reply.ok.key_expr, reply.ok.payload.decode("utf-8")))
                 #.format(reply.ok.key_expr, reply.ok.payload.deserialize(str))) <- :(
-        except:
+        except Exception as e:
             if reply.err is not None:
-                print("Received (ERROR: '{}')"
-                    .format(reply.err.payload.decode("utf-8")))
+                try:
+                    error_bytes = bytes(reply.err.payload).decode("utf-8")
+                    #error_text = error_bytes.decode("utf-8")
+                    print("Received (ERROR1: '{error_bytes}')")
+                except Exception as inner_e:
+                    print(f"Received (ERROR2: Failed to decode payload: {inner_e}")
             else:
-              print(f"Received (ERROR: {e})")
+                print(f"Received (ERROR3: {e})")
 
     session.close()
 
