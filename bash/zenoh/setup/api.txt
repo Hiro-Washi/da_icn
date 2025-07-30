@@ -11,6 +11,61 @@ https://github.com/eclipse-zenoh/zenoh-backend-filesystem : zenoh経由で発行
 # Plugin
 https://github.com/eclipse-zenoh/zenoh-plugin-dds
 https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds
+  echo "deb [trusted=yes] https://download.eclipse.org/zenoh/debian-repo/ /" | sudo tee -a /etc/apt/sources.list > /dev/null
+  sudo apt update
+  install the plugin with: sudo apt install zenoh-plugin-ros2dds.
+  install the standalone executable with: sudo apt install zenoh-bridge-ros2dds.
+  # build
+  Rust. If you already have the Rust toolchain installed, make sure it is up-to-date with: rustup update
+  On Linux, make sure the llvm and clang development packages are installed:
+    on Debians do: sudo apt install llvm-dev libclang-dev
+    on Alpine do: apk install llvm11-dev clang-dev
+  Once these dependencies are in place, you may clone the repository on your machine:
+    git clone https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds.git
+    cd zenoh-plugin-ros2dds
+    cargo build --release
+    {The standalone executable binary zenoh-bridge-ros2dds and a plugin shared library (*.so on Linux, *.dylib on Mac OS, *.dll on Windows) to be dynamically loaded by the zenoh router zenohd will be generated in the target/release subdirectory.}
+  # ROS2 package
+  You can also build zenoh-bridge-ros2dds as a ROS package running:
+    rosdep install --from-paths . --ignore-src -r -y
+    colcon build --packages-select zenoh_bridge_ros2dds --cmake-args -DCMAKE_BUILD_TYPE=Release
+  The rosdep command will automatically install Rust and clang as build dependencies.
+  If you want to cross-compile the package on x86 device for any target, you can use the following command:
+    rosdep install --from-paths . --ignore-src -r -y
+    colcon build --packages-select zenoh_bridge_ros2dds --cmake-args -DCMAKE_BUILD_TYPE=Release  --cmake-args -DCROSS_ARCH=<target>
+  # Usage
+  典型的な使用法としては、ロボット内で 1 つのブリッジを実行し、ロボットを監視および操作する別のホスト内で 1 つのブリッジを実行することです。
+    ** このブリッジはCycloneDDSに依存しており、RMW_IMPLEMENTATION=rmw_cyclonedds_cppでテストされている。DDS実装はUDPマルチキャストおよびユニキャスト上で相互運用可能ですが、他のDDS実装の特殊で非標準的な機能（共有メモリなど）により、いくつかの問題が発生する可能性があります。
+  ** zenoh-bridge-ros2dds によってブリッジされた2つのホスト間で DDS 通信が発生しないようにすることが重要です。そうしないと、トラフィックの重複やループが発生する可能性があります。**
+  - Ironの後はROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOSTを、Ironの前はROS_LOCALHOST_ONLY=1を使用してください。
+    ループバックインターフェースのMULTICASTを次のコマンドで有効にします(Linuxの場合): sudo ip l set lo multicast on
+  - 各ホストで異なるROS_DOMAIN_IDを使用する。
+  - ロボットの内部インターフェースのみを使用するようにCycloneDDSを設定するCYCLONEDDS_URIを使用します。この設定は、ブリッジだけでなく、すべてのROSノードに使用する必要があります。
+    例えば、Turtlebot4は2台のホストをUSBで接続しています：
+<CycloneDDS>
+ <Domain>
+     <General>
+         <Interfaces>
+             <NetworkInterface name="usb0"/>
+             <!-- For less traffic, force multicast usage on loopback even if not configured.         -->
+             <!-- All ROS Nodes and bridges must have this same config, otherwise they won't discover -->
+             <NetworkInterface address="127.0.0.1" multicast="true"/> 
+         </Interfaces>
+         <DontRoute>true</DontRoute>
+     </General>
+ </Domain>
+</CycloneDDS>
+  On the robot, run:
+    zenoh-bridge-ros2dds
+  On the operating host run:
+    zenoh-bridge-ros2dds -e tcp/<robot-ip>:7447
+    check if the robot's ROS interfaces are accessible via:
+      ros2 topic list
+      ros2 service list
+      ros2 action list
+
+  docker pull eclipse/zenoh-bridge-ros2dds:latest
+  docker pull eclipse/zenoh-bridge-ros2dds:nightly
 https://github.com/eclipse-zenoh/zenoh-plugin-mqtt
 https://github.com/eclipse-zenoh/zenoh-dissector
 https://github.com/eclipse-zenoh/zenoh-plugin-webserver
